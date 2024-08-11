@@ -26,6 +26,22 @@ namespace Persistence.Identity
             _jwt = jwt.Value;
             _roleManager = roleManager;
         }
+
+
+        ////////////////////////////////////
+        ///
+
+        public async Task<bool> IsUserInRoleAsync(Guid userId, string roleName)
+        {
+            var user = await _userManager.FindByIdAsync(userId.ToString());
+            return user != null && await _userManager.IsInRoleAsync(user, roleName);
+        }
+
+
+
+
+
+
         public async Task<string> AddRoleAsync(RoleModel model)
         {
             var user = await _userManager.FindByIdAsync(model.UserID);
@@ -57,6 +73,16 @@ namespace Persistence.Identity
             else
                 return "An error occurred while removing the user from the role";
 
+        }
+       
+        public async Task<string> GetRoleAsync(string userId)
+        {
+            var user = await _userManager.FindByIdAsync(userId);
+            if (user == null)
+                return "Invalid userId";
+
+            var roles = await _userManager.GetRolesAsync(user);
+            return roles.Count > 0 ? string.Join(", ", roles) : "User has no roles";
         }
 
         public async Task<AuthModel> LogInAsync(LogInModel model)
@@ -179,7 +205,7 @@ namespace Persistence.Identity
             {
                 Id = user.Id,
                 UserName = user.UserName,
-                Email = user.Email
+                Email = user.Email,                
             })
             .ToListAsync();
 

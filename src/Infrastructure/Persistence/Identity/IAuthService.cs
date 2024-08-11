@@ -14,6 +14,15 @@ namespace Persistence.Identity
         Task<List<UserModel>> GetAllUsers();
         Task<bool> DeleteUserAsync(string userId);
 
+        Task<string> GetRoleAsync(string userId); // Add this linez
+
+
+
+
+        Task<bool> IsUserInRoleAsync(Guid userId, string roleName);
+
+
+
 
     }
 }

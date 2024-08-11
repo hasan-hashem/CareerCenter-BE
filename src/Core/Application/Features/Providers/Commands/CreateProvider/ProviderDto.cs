@@ -9,6 +9,7 @@ namespace Application.Features.Providers.Commands.CreateProvider
 {
     public class ProviderDto
     {
+    
         public Guid UserId { get; set; }
         public string AliasName { get; set; }
         public string Skills { get; set; }

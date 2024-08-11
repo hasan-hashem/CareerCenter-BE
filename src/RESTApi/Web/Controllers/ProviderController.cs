@@ -6,17 +6,22 @@ using Application.Features.Providers.Queries.GetProviders;
 using Application.Interfaces;
 using Microsoft.AspNetCore.JsonPatch;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Rewrite;
+using Microsoft.IdentityModel.Tokens;
+using Persistence.Identity;
+using Persistence.Models;
 
 namespace Web.Controllers
 {
-
     public class ProviderController : ApiControllerBase
     {
         private readonly IApplicationDbContext _context;
+        private readonly IAuthService _authService;  // إضافة خدمة إدارة الأدوار
 
-        public ProviderController(IApplicationDbContext context)
+        public ProviderController(IApplicationDbContext context, IAuthService authService)  // تضمين خدمة إدارة الأدوار
         {
             _context = context;
+            _authService = authService;
         }
 
         [HttpGet("provider")]
@@ -32,16 +37,49 @@ namespace Web.Controllers
         }
 
         [HttpPost("service/{id}/provider")]
-        public async Task<ActionResult<Guid>> Create(Guid id, ProviderDto command)
+        public async Task<ActionResult<Guid>> Create(Guid id, [FromBody] ProviderDto command)
         {
-            if (!ModelState.IsValid)
+            if (id == Guid.Empty)
             {
-                return BadRequest(ModelState);
+                return BadRequest("Service ID cannot be empty.");
             }
 
-            var result = await Mediator.Send(new CreateProviderCommand(id, command));
-            return result;
+            if (command == null)
+            {
+                return BadRequest("Provider data is required.");
+            }
+
+            if (!ModelState.IsValid)
+            {
+                var errors = ModelState.Where(m => m.Value.Errors.Count > 0)
+                                       .Select(m => new
+                                       {
+                                           Field = m.Key,
+                                           Errors = m.Value.Errors.Select(e => e.ErrorMessage).ToArray()
+                                       }).ToArray();
+
+                return BadRequest(new { errors });
+            }
+
+            try
+            {
+                //var isInRole = await _authService.IsUserInRoleAsync(command.UserId, command.)
+                //if (isInRole)
+                //{
+                //    return BadRequest("User already has the provider role.");
+                //}
+
+                var result = await Mediator.Send(new CreateProviderCommand(id, command));
+
+                return Ok(result);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, $"An error occurred while processing your request: {ex.Message}");
+            }
         }
+
+
 
         [HttpPut("provider/{id}")]
         public async Task<ActionResult> Update(Guid id, [FromBody] ProviderForUpdate command)
@@ -68,6 +106,7 @@ namespace Web.Controllers
 
             return NoContent();
         }
+
         [HttpPatch("provider/{id}")]
         public async Task<IActionResult> Patch(Guid id, [FromBody] JsonPatchDocument<ConnectionStatusVm> PatchDocument)
         {

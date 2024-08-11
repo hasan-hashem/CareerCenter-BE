@@ -6,7 +6,11 @@ namespace Persistence.Models
     {
         [Required]
         public string UserID { get; set; }
+
         [Required]
         public string Role { get; set; }
+         
+   
+
     }
 }
